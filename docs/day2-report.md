@@ -195,8 +195,6 @@ http://localhost:5000
 
 # GitHub Repository Link
 
-Add your repository link here:
-
 ```bash id="jlwmfq"
 https://github.com/yourusername/ecommerce-app
 ```

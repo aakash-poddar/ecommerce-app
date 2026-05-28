@@ -145,7 +145,6 @@ docs/api-endpoints.md
 
 # GitHub Repository Link
 
-Add your repository link here:
 
 ```bash
 https://github.com/aakash-poddar/ecommerce-app
