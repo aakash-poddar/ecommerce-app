@@ -4,6 +4,7 @@
     import lombok.*;
 
     import java.time.LocalDateTime;
+    import java.util.List;
 
     @Entity
     @Table(name = "users")
@@ -21,7 +22,7 @@
         @Column(nullable = false)
         private String name;
 
-        @Column(unique = true)
+        @Column(unique = true,nullable = false)
         private String email;
 
         @Column(nullable = false)
@@ -31,8 +32,6 @@
         @Column(nullable = false)
         private Role role;
 
-        @Column(name = "is_active")
-        private boolean isActive = true;
 
-        private LocalDateTime createdAt;
+
     }

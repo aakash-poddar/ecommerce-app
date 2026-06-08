@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button, Card, EmptyState, Field, Input, PageTitle, SectionTitle, Select, Shell, StatusBadge, Textarea, TextButton } from '../components/ShopUI'
 import { Header } from '../components/Header'
 import { useShop } from '../context/useShop'
@@ -151,12 +151,12 @@ export function CheckoutPage() {
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    placeOrder({
+    const order = placeOrder({
       address: `${form.address}, ${form.city} - ${form.pincode}`,
       phone: form.phone,
       paymentMethod: form.paymentMethod,
     })
-    navigate('/orders')
+    navigate('/orders', { state: { orderPlaced: true, orderId: order.id } })
   }
 
   return (
@@ -217,27 +217,91 @@ export function CheckoutPage() {
 }
 
 export function OrdersPage() {
-  const { orders, cartCount, user, logout, formatCurrency } = useShop()
+  const location = useLocation()
+  const { orders, cartCount, user, logout, formatCurrency, authSummary } = useShop()
+  const [allOrders, setAllOrders] = useState([])
+  const visibleOrders = authSummary.isAdmin ? allOrders : orders
+  const latestOrder = visibleOrders[0]
+
+  useEffect(() => {
+    // if admin, fetch all orders from backend
+    if (authSummary.isAdmin) {
+      import('../api/client').then(({ default: client }) => {
+        client.get('/orders/all').then((res) => setAllOrders(res.data)).catch(() => {})
+      })
+    }
+  }, [authSummary.isAdmin])
 
   return (
     <Shell>
       <Header cartCount={cartCount} user={user} onLogout={logout} />
       <main className="page-stack">
         <PageTitle eyebrow="Orders" title="My Orders" description="Order history list inspired by the wireframe history panel." />
-        <section className="card section-card orders-list">
-          {orders.map((order) => (
-            <article key={order.id} className="order-card">
+        {location.state?.orderPlaced && latestOrder ? (
+          <Card className="section-card">
+            <div className="button-row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <strong>Order #{order.id}</strong>
-                <p>{order.items} items - {formatCurrency(order.amount)}</p>
-                <small>{order.date}</small>
+                <p className="eyebrow">Order placed successfully</p>
+                <h2>Order #{latestOrder.id}</h2>
+                <p>Your order has been placed and is visible only in your account.</p>
               </div>
-              <div className="order-actions">
-                <StatusBadge status={order.status} />
-                <TextButton>View Details</TextButton>
+              <StatusBadge status={latestOrder.status} />
+            </div>
+            <div className="summary-list" style={{ marginTop: '1rem' }}>
+              <div>
+                <span>Total amount</span>
+                <strong>{formatCurrency(latestOrder.amount)}</strong>
               </div>
-            </article>
-          ))}
+              <div>
+                <span>Payment method</span>
+                <strong>{latestOrder.paymentMethod || 'Cash on Delivery'}</strong>
+              </div>
+              <div>
+                <span>Shipping address</span>
+                <strong>{latestOrder.address}</strong>
+              </div>
+            </div>
+          </Card>
+        ) : null}
+        <section className="card section-card orders-list">
+          {visibleOrders.length ? (
+            visibleOrders.map((order) => (
+              <article key={order.id} className="order-card">
+                <div>
+                  <strong>Order #{order.id}</strong>
+                  <p>{order.items} items - {formatCurrency(order.amount)}</p>
+                  <small>{order.date}</small>
+                  {order.products ? (
+                    <div>
+                      {order.products.map((p, idx) => (
+                        <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <img src={p.product.image || p.image} alt={p.product?.name || p.name} width={48} />
+                          <div>
+                            <strong>{p.product?.name || p.name}</strong>
+                            <div>Qty: {p.quantity || 1}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="order-actions">
+                  <StatusBadge status={order.status} />
+                  <TextButton>View Details</TextButton>
+                </div>
+              </article>
+            ))
+          ) : (
+            <EmptyState
+              title="No orders yet"
+              description="Once you place an order, it will show up here with full details for your account only."
+              action={
+                <Link to="/products" className="btn btn-primary">
+                  Start shopping
+                </Link>
+              }
+            />
+          )}
         </section>
       </main>
     </Shell>

@@ -5,7 +5,32 @@ import { useState } from 'react'
 
 export function AdminPage() {
   const { adminStats, orders, products, cartCount, user, logout, formatCurrency } = useShop()
-  const [productForm, setProductForm] = useState({ name: '', price: '', category: 'Electronics', stock: '', description: '' })
+  const [productForm, setProductForm] = useState({ name: '', price: '', category: 'Electronics', stock: '', description: '', imageUrl: '' })
+  const { createProduct } = useShop()
+  const [loading, setLoading] = useState(false)
+  const { deleteProduct, updateProduct } = useShop()
+  const [editingId, setEditingId] = useState(null)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      setLoading(true)
+      if (editingId) {
+        await updateProduct(editingId, productForm)
+        alert('Product updated successfully')
+        setEditingId(null)
+      } else {
+        await createProduct(productForm)
+        alert('Product added successfully')
+      }
+      setProductForm({ name: '', price: '', category: 'Electronics', stock: '', description: '', imageUrl: '' })
+    } catch (err) {
+      alert('Failed to add product: ' + (err?.message || err))
+    }
+    finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <Shell>
@@ -38,7 +63,7 @@ export function AdminPage() {
           <div className="admin-panels">
             <Card className="admin-form-panel" id="products">
               <SectionTitle title="Add New Product" />
-              <form className="form-grid">
+              <form className="form-grid" onSubmit={handleSubmit}>
                 <Field label="Product Name">
                   <Input value={productForm.name} onChange={(event) => setProductForm({ ...productForm, name: event.target.value })} />
                 </Field>
@@ -60,7 +85,15 @@ export function AdminPage() {
                 <Field label="Description">
                   <Textarea value={productForm.description} onChange={(event) => setProductForm({ ...productForm, description: event.target.value })} rows={4} />
                 </Field>
-                <Button type="submit">Add Product</Button>
+                <Field label="Image URL">
+                  <Input
+                    type="url"
+                    placeholder="https://example.com/product-image.jpg"
+                    value={productForm.imageUrl}
+                    onChange={(event) => setProductForm({ ...productForm, imageUrl: event.target.value })}
+                  />
+                </Field>
+                <Button type="submit" disabled={loading}>{loading ? 'Adding…' : 'Add Product'}</Button>
               </form>
             </Card>
 
@@ -102,8 +135,27 @@ export function AdminPage() {
                   <span>{formatCurrency(product.price)}</span>
                   <span>{product.stock}</span>
                   <div className="order-actions">
-                    <TextButton>Edit</TextButton>
-                    <TextButton>Delete</TextButton>
+                    <TextButton onClick={() => {
+                      // populate form for editing
+                      setProductForm({
+                        name: product.name,
+                        price: product.price,
+                        category: product.category,
+                        stock: product.stock,
+                        description: product.description,
+                        imageUrl: product.image || '',
+                      })
+                      setEditingId(product.id)
+                    }}>Edit</TextButton>
+                    <TextButton onClick={async () => {
+                      if (!confirm('Delete this product?')) return
+                      try {
+                        await deleteProduct(product.id)
+                        alert('Deleted')
+                      } catch (e) {
+                        alert('Delete failed: ' + (e?.message || e))
+                      }
+                    }}>Delete</TextButton>
                   </div>
                 </div>
               ))}

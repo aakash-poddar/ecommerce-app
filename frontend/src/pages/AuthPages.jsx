@@ -19,7 +19,8 @@ export function LoginPage() {
     try {
       setError('')
       const resp = await loginApi(form.email, form.password)
-      login({ token: resp.token, username: resp.username, email: resp.username, role: resp.role })
+      // pass the full response object to `login` so ShopContext.applyApiSession picks up token and role
+      login({ name: resp })
       toast.show('Logged in successfully', { type: 'success' })
       navigate('/products')
     } catch (err) {

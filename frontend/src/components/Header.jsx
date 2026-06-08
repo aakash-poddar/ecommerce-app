@@ -27,6 +27,7 @@ export function Header({ cartCount, user, onLogout }) {
   const { isDark, toggleTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
   const { authSummary } = useShop()
+  const visibleNavItems = authSummary.isAdmin ? navItems : navItems.filter((item) => item.to !== '/admin')
 
   useEffect(() => {
     // lock body scroll when mobile menu is open
@@ -56,7 +57,7 @@ export function Header({ cartCount, user, onLogout }) {
       </button>
 
       <nav className="nav-links desktop-only" aria-label="Primary navigation">
-        {navItems.map((item) => (
+        {visibleNavItems.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.to === '/'}>
             {item.label}
           </NavLink>
@@ -81,7 +82,7 @@ export function Header({ cartCount, user, onLogout }) {
             </div>
 
             <nav className="mobile-nav" aria-label="Mobile navigation">
-              {navItems.map((item) => (
+              {visibleNavItems.map((item) => (
                 <NavLink key={item.to} to={item.to} end={item.to === '/'} onClick={() => setMobileOpen(false)}>
                   {item.label}
                 </NavLink>

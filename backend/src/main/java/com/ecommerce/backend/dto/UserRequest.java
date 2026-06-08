@@ -1,19 +1,17 @@
 package com.ecommerce.backend.dto;
 
-import lombok.*;
-
-import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-@Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterRequest {
+@Builder
+public class UserRequest {
+
     private String name;
     private String email;
     private String password;
-    private String role;  // "ROLE_USER" or "ROLE_ADMIN"
-
-
 }
